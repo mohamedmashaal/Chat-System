@@ -10,10 +10,6 @@ class ApplicationsController < ApplicationController
   # GET /applications/1
   def show
     if @error == 0
-      render json: @error_message, status: @status_code
-    elsif @error == 1
-      render json: @error_message, status: @status_code
-    else
       render json: {name: @application.name, chats_count: @application.chats_count}, status: :ok
     end
   end
@@ -40,10 +36,6 @@ class ApplicationsController < ApplicationController
   def update
     new_name = params[:name]
     if @error == 0
-      render json: @error_message, status: @status_code
-    elsif @error == 1
-      render json: @error_message, status: @status_code
-    else
       if @application.update({name: new_name})
         render json: {status: 'SUCCESS', message: 'Application Updated'}, status: :ok
       else
@@ -55,10 +47,6 @@ class ApplicationsController < ApplicationController
   # DELETE /applications/1
   def destroy
     if @error == 0
-      render json: @error_message, status: @status_code
-    elsif @error == 1
-      render json: @error_message, status: @status_code
-    else
       @application.destroy
       render json: {status: 'SUCCESS', message: 'Application Deleted'}, status: :ok
     end
@@ -68,27 +56,17 @@ class ApplicationsController < ApplicationController
     # Use callbacks to share common setup or constraints between actions.
     def get_application
       token = params[:id]
-      @error = -1
+      @error = 0
       if token == nil
-        @error = 0
-        fill_error
+        @error = 1
+        render json: {status: 'ERROR', message: 'Missing Parameters'}, status: :bad_request
         return
       end
       @application = Application.find_by(token: token)
       if @application == nil
         @error = 1
-        fill_error
+        render json: {status: 'ERROR', message: 'No Such Application'}, status: :bad_request
       end
-    end
-
-    def fill_error
-      if @error == 0
-        @error_message = {status: 'ERROR', message: 'Missing Parameters'}
-      end
-      if @error == 1
-        @error_message = {status: 'ERROR', message: 'No Such Application'}
-      end
-      @status_code =:bad_request
     end
 
 end

@@ -5,24 +5,14 @@ class ChatsController < ApplicationController
   # GET /applications/:application_id/chats
   def index
     if @error == 0
-      render json: @error_message, status: @status_code
-    elsif @error == 1
-      render json: @error_message, status: @status_code
-    else
-    chats = @application.chats.select(:number, :messages_count).to_json(except: :id)
-    render json: chats, status: :ok
+      chats = @application.chats.select(:number, :messages_count).to_json(except: :id)
+      render json: chats, status: :ok
     end
   end
 
   # GET /applications/:application_id/chats/1
   def show
     if @error == 0
-      render json: @error_message, status: @status_code
-    elsif @error == 1
-      render json: @error_message, status: @status_code
-    elsif @error == 2
-      render json: @error_message, status: @status_code
-    else
       render json: {chat: @chat.number, messages_count: @chat.messages_count}, status: :ok
     end
   end
@@ -30,10 +20,6 @@ class ChatsController < ApplicationController
   # POST /applications/:application_id/chats
   def create
     if @error == 0
-      render json: @error_message, status: @status_code
-    elsif @error == 1
-      render json: @error_message, status: @status_code
-    else
       ActiveRecord::Base.transaction do
         @application.lock!
         chat = @application.chats.new
@@ -60,12 +46,6 @@ class ChatsController < ApplicationController
   # DELETE /applications/:application_id/chats/1
   def destroy
     if @error == 0
-      render json: @error_message, status: @status_code
-    elsif @error == 1
-      render json: @error_message, status: @status_code
-    elsif @error == 2
-      render json: @error_message, status: @status_code
-    else
       @chat.destroy
       render json: {status: 'SUCCESS', message: 'Chat Deleted'}, status: :ok
     end
@@ -75,51 +55,39 @@ class ChatsController < ApplicationController
     def get_chat
       token = params[:application_id]
       chat_id = params[:id]
-      @error = -1
+      @error = 0
       if token == nil || chat_id == nil
-        @error = 0
-        fill_error
+        @error = 1
+        render json: {status: 'ERROR', message: 'Missing Parameters'}, status: :bad_request
         return
       end
       application = Application.find_by({token: token})
       if application == nil
         @error = 1
-        fill_error
+        render json: {status: 'ERROR', message: 'No Such Application'}, status: :bad_request
         return
       end
       @chat = Chat.find_by({application_id: application.id, number: chat_id})
       if @chat == nil
-        @error = 2
-        fill_error
+        @error = 1
+        render json: {status: 'ERROR', message: 'No Such Chat'}, status: :bad_request
       end
     end
 
     def get_application
       token = params[:application_id]
-      @error = -1
+      @error = 0
       if token == nil
-        @error = 0
-        fill_error
+        @error = 1
+        render json: {status: 'ERROR', message: 'Missing Parameters'}, status: :bad_request
         return
       end
       @application = Application.find_by({token: token})
       if @application == nil
         @error = 1
-        fill_error
+        render json: {status: 'ERROR', message: 'No Such Application'}, status: :bad_request
       end
     end
 
-    def fill_error
-      if @error == 0
-        @error_message = {status: 'ERROR', message: 'Missing Parameters'}
-      end
-      if @error == 1
-        @error_message = {status: 'ERROR', message: 'No Such Application'}
-      end
-      if @error == 2
-        @error_message = {status: 'ERROR', message: 'No Such Chat'}
-      end
-      @status_code =:bad_request
-    end
 
 end

@@ -7,23 +7,11 @@ class MessagesController < ApplicationController
   def index
     if params.has_key?(:search)
       if @error == 0
-        render json: @error_message, status: @status_code
-      elsif @error == 1
-        render json: @error_message, status: @status_code
-      elsif @error == 2
-        render json: @error_message, status: @status_code
-      else
         results = do_search
         render json: results, :except => [:id, :chat_id]
       end
     else
       if @error == 0
-        render json: @error_message, status: @status_code
-      elsif @error == 1
-        render json: @error_message, status: @status_code
-      elsif @error == 2
-        render json: @error_message, status: @status_code
-      else
         messages = @chat.messages.select(:number, :body).to_json(except: :id)
         render json: messages, status: :ok
       end
@@ -33,14 +21,6 @@ class MessagesController < ApplicationController
   # GET /applications/:application_id/chats/:chat_id/messages/1
   def show
     if @error == 0
-      render json: @error_message, status: @status_code
-    elsif @error == 1
-      render json: @error_message, status: @status_code
-    elsif @error == 2
-      render json: @error_message, status: @status_code
-    elsif @error == 3
-      render json: @error_message, status: @status_code
-    else
       render json: {message_number: @message.number, message: @message.body}, status: :ok
     end
   end
@@ -53,12 +33,6 @@ class MessagesController < ApplicationController
     end
     body = (params[:body] == nil) ? "" : params[:body]
     if @error == 0
-      render json: @error_message, status: @status_code
-    elsif @error == 1
-      render json: @error_message, status: @status_code
-    elsif @error == 2
-      render json: @error_message, status: @status_code
-    else
       ActiveRecord::Base.transaction do
         @chat.lock!
         message = @chat.messages.new
@@ -81,14 +55,6 @@ class MessagesController < ApplicationController
   def update
     new_body = params[:body]
     if @error == 0
-      render json: @error_message, status: @status_code
-    elsif @error == 1
-      render json: @error_message, status: @status_code
-    elsif @error == 2
-      render json: @error_message, status: @status_code
-    elsif @error == 3
-      render json: @error_message, status: @status_code
-    else
       if @message.update({body: new_body})
         render json: {status: 'SUCCESS', message: 'Message Updated'}, status: :ok
       else
@@ -100,89 +66,63 @@ class MessagesController < ApplicationController
   # DELETE /applications/:application_id/chats/:chat_id/messages/1
   def destroy
     if @error == 0
-      render json: @error_message, status: @status_code
-    elsif @error == 1
-      render json: @error_message, status: @status_code
-    elsif @error == 2
-      render json: @error_message, status: @status_code
-    elsif @error == 3
-      render json: @error_message, status: @status_code
-    else
       @message.destroy
       render json: {status: 'SUCCESS', message: 'Message Deleted'}, status: :ok
     end
   end
 
   private
-    # Use callbacks to share common setup or constraints between actions.
+
     def get_message
       token = params[:application_id]
       chat_number = params[:chat_id]
       message_number = params[:id]
-      @error = -1
+      @error = 0
       if token == nil || chat_number == nil || message_number == nil
-        @error = 0
-        fill_error
+        @error = 1
+        render json: {status: 'ERROR', message: 'Missing Parameters'}, status: :bad_request
         return
       end
       application = Application.find_by({token: token})
       if application == nil
         @error = 1
-        fill_error
+        render json: {status: 'ERROR', message: 'No Such Application'}, status: :bad_request
         return
       end
       chat = application.chats.find_by({number: chat_number})
       if chat == nil
-        @error = 2
-        fill_error
+        @error = 1
+        render json: {status: 'ERROR', message: 'No Such Chat'}, status: :bad_request
         return
       end
       @message = chat.messages.find_by({number: message_number})
       if @message == nil
-        @error = 3
-        fill_error
+        @error = 1
+        render json: {status: 'ERROR', message: 'No Such Message'}, status: :bad_request
       end
     end
 
     def get_chat
       token = params[:application_id]
       chat_number = params[:chat_id]
-      @error = -1
+      @error = 0
       if token == nil || chat_number == nil
-        @error = 0
-        fill_error
+        @error = 1
+        render json: {status: 'ERROR', message: 'Missing Parameters'}, status: :bad_request
         return
       end
       application = Application.find_by({token: token})
       if application == nil
         @error = 1
-        fill_error
+        render json: {status: 'ERROR', message: 'No Such Application'}, status: :bad_request
         return
       end
       @chat = application.chats.find_by({number: chat_number})
       if @chat == nil
-        @error = 2
-        fill_error
+        @error = 1
+        render json: {status: 'ERROR', message: 'No Such Chat'}, status: :bad_request
       end
     end
-
-    # Only allow a trusted parameter "white list" through.
-    def fill_error
-      if @error == 0
-        @error_message = {status: 'ERROR', message: 'Missing Parameters'}
-      end
-      if @error == 1
-        @error_message = {status: 'ERROR', message: 'No Such Application'}
-      end
-      if @error == 2
-        @error_message = {status: 'ERROR', message: 'No Such Chat'}
-      end
-      if @error == 3
-        @error_message = {status: 'ERROR', message: 'No Such Message'}
-      end
-      @status_code =:bad_request
-    end
-
 
     def do_search
       response = Message.__elasticsearch__.search(
