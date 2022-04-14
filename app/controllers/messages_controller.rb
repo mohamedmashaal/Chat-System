@@ -1,15 +1,6 @@
 class MessagesController < ApplicationController
   before_action :get_chat, only: [:index, :create]
   before_action :get_message, only: [:show, :update, :destroy]
-=begin
-  application_chat_messages GET    /applications/:application_id/chats/:chat_id/messages(.:format)     messages#index
-  POST   /applications/:application_id/chats/:chat_id/messages(.:format)     messages#create
-  application_chat_message GET    /applications/:application_id/chats/:chat_id/messages/:id(.:format) messages#show
-  PATCH  /applications/:application_id/chats/:chat_id/messages/:id(.:format) messages#update
-  PUT    /applications/:application_id/chats/:chat_id/messages/:id(.:format) messages#update
-  DELETE /applications/:application_id/chats/:chat_id/messages/:id(.:format) messages#destroy
-=end
-
 
 
   # GET /applications/:application_id/chats/:chat_id/messages(.:format)
